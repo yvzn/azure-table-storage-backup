@@ -1,0 +1,13 @@
+{
+	"name": "azure-table-storage-backup-dev-db",
+	"version": "1.0.0",
+	"private": "true",
+	"scripts": {
+		"dev": "AZURITE_ACCOUNTS=$(grep AZURITE_ACCOUNTS .env.local | sed -e 's/[^=]*=//') && azurite --silent --location ./.azurite --debug ./.azurite/debug.log"
+	},
+	"author": "Yvan Razafindramanana",
+	"license": "MIT",
+	"dependencies": {
+		"azurite": "^3.29.0"
+	}
+}
