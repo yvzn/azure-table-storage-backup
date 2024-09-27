@@ -1,9 +1,9 @@
 {
-  "profiles": {
-    "src": {
-      "commandName": "Project",
-      "commandLineArgs": "--port 7180",
-      "launchBrowser": false
-    }
-  }
+	"profiles": {
+		"backup": {
+			"commandName": "Project",
+			"commandLineArgs": "--port 7180",
+			"launchBrowser": false
+		}
+	}
 }
