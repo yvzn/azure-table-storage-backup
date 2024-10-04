@@ -3,6 +3,8 @@ using Microsoft.Extensions.Logging;
 using Azure.Data.Tables;
 using Polly;
 using Polly.Retry;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace backup;
 
@@ -12,19 +14,22 @@ public class BackupTables(ILogger<BackupTables> log)
 
 	[Function("BackupTablesDaily")]
 	public async Task RunAsync(
-	[TimerTrigger("0 0 1 * * *"
-#if DEBUG
-		, RunOnStartup=true
-#endif
-	)]
+		[TimerTrigger("%DailyBackupSchedule%")]
 		TimerInfo timerInfo)
 	{
-#if DEBUG
-		await Task.Delay(5_000);
-#endif
-
 		await BackupTablesAsync(["batch", "location", "signup", "user", "validlocation"]);
 	}
+
+#if DEBUG
+	[Function("BackupTablesTest")]
+	public async Task<IActionResult> TestAsync(
+		[HttpTrigger(AuthorizationLevel.Anonymous, "get")]
+		HttpRequest req)
+	{
+		await BackupTablesAsync(["batch" , "location", "signup", "user", "validlocation"]);
+		return new OkResult();
+	}
+#endif
 
 	private Task BackupTablesAsync(string[] tables)
 		=> Task.WhenAll(tables.Select(BackupTableAsync));

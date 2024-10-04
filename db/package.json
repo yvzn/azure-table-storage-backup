@@ -3,7 +3,8 @@
 	"version": "1.0.0",
 	"private": "true",
 	"scripts": {
-		"dev": "AZURITE_ACCOUNTS=$(grep AZURITE_ACCOUNTS .env.local | sed -e 's/[^=]*=//') && azurite --silent --location ./.azurite --debug ./.azurite/debug.log"
+		"dev:windows": "set AZURITE_ACCOUNTS=devstoreaccount1:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;devstoreaccount2:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw== && azurite --location ./.azurite --debug ./.azurite/debug.log",
+		"dev:linux": "AZURITE_ACCOUNTS=devstoreaccount1:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;devstoreaccount2:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw== && azurite --location ./.azurite --debug ./.azurite/debug.log"
 	},
 	"author": "Yvan Razafindramanana",
 	"license": "MIT",
