@@ -39,9 +39,9 @@ Copy the `local.settings.json.sample` file to `local.settings.json` in the `src/
 
 | Setting | Value |
 |---|---|
-| SOURCE_CONNECTION_STRING | connection string to the backup source account |
-| BACKUP_CONNECTION_STRING | connection string to the backup destination account |
-| DailyBackupSchedule | [Cron expression](https://github.com/atifaziz/NCrontab) to define the periodicity of the backup |
+| BACKUP_SOURCE_CONNECTION_STRING | connection string to the backup source account |
+| BACKUP_DESTINATION_CONNECTION_STRING | connection string to the backup destination account |
+| BACKUP_DAILY_SCHEDULE | [Cron expression](https://github.com/atifaziz/NCrontab) to define the periodicity of the backup |
 
 
 ### Building and Running the Azure Function

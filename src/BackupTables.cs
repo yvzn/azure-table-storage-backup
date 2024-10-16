@@ -10,11 +10,11 @@ namespace backup;
 
 public class BackupTables(ILogger<BackupTables> log)
 {
-	private static readonly TableServiceClient backupTableServiceClient = new(Environment.GetEnvironmentVariable("BACKUP_CONNECTION_STRING"));
+	private static readonly TableServiceClient destinationTableServiceClient = new(Environment.GetEnvironmentVariable("BACKUP_DESTINATION_CONNECTION_STRING"));
 
 	[Function("BackupTablesDaily")]
 	public async Task RunAsync(
-		[TimerTrigger("%DailyBackupSchedule%")]
+		[TimerTrigger("%BACKUP_DAILY_SCHEDULE%")]
 		TimerInfo timerInfo)
 	{
 		await BackupTablesAsync(["batch", "location", "signup", "user", "validlocation"]);
@@ -43,10 +43,10 @@ public class BackupTables(ILogger<BackupTables> log)
 			var resiliencePipeline = GetResiliencePipeline(log);
 
 			await resiliencePipeline.ExecuteAsync(
-				async (CancellationToken ct) => await backupTableServiceClient.DeleteTableIfExistsAsync(tableName, ct));
+				async (CancellationToken ct) => await destinationTableServiceClient.DeleteTableIfExistsAsync(tableName, ct));
 
 			await resiliencePipeline.ExecuteAsync(
-				async (CancellationToken ct) => await backupTableServiceClient.CreateTableAsync(tableName, ct));
+				async (CancellationToken ct) => await destinationTableServiceClient.CreateTableAsync(tableName, ct));
 
 			var entityCount = await BackupEntities(tableName);
 
@@ -61,8 +61,8 @@ public class BackupTables(ILogger<BackupTables> log)
 	private static async Task<int> BackupEntities(string tableName)
 	{
 		var entityCount = 0;
-		var sourceTableClient = new TableClient(Environment.GetEnvironmentVariable("SOURCE_CONNECTION_STRING"), tableName);
-		var backupTableClient = new TableClient(Environment.GetEnvironmentVariable("BACKUP_CONNECTION_STRING"), tableName);
+		var sourceTableClient = new TableClient(Environment.GetEnvironmentVariable("BACKUP_SOURCE_CONNECTION_STRING"), tableName);
+		var destinationTableClient = new TableClient(Environment.GetEnvironmentVariable("BACKUP_DESTINATION_CONNECTION_STRING"), tableName);
 
 		await foreach (var sourceEntity in sourceTableClient.QueryAsync<TableEntity>(_ => true))
 		{
@@ -75,7 +75,7 @@ public class BackupTables(ILogger<BackupTables> log)
 			{
 				backupEntity[property] = sourceEntity[property];
 			}
-			await backupTableClient.AddEntityAsync(backupEntity);
+			await destinationTableClient.AddEntityAsync(backupEntity);
 			++entityCount;
 		}
 
