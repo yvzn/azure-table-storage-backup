@@ -12,12 +12,14 @@ public class BackupTables(ILogger<BackupTables> log)
 {
 	private static readonly TableServiceClient destinationTableServiceClient = new(Environment.GetEnvironmentVariable("BACKUP_DESTINATION_CONNECTION_STRING"));
 
+	private static readonly string[] tablesToBackup = ExtractTableNames(Environment.GetEnvironmentVariable("BACKUP_SOURCE_TABLES"));
+
 	[Function("BackupTablesDaily")]
 	public async Task RunAsync(
 		[TimerTrigger("%BACKUP_DAILY_SCHEDULE%")]
 		TimerInfo timerInfo)
 	{
-		await BackupTablesAsync(["batch", "location", "signup", "user", "validlocation"]);
+		await BackupTablesAsync();
 	}
 
 #if DEBUG
@@ -26,13 +28,13 @@ public class BackupTables(ILogger<BackupTables> log)
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get")]
 		HttpRequest req)
 	{
-		await BackupTablesAsync(["batch" , "location", "signup", "user", "validlocation"]);
+		await BackupTablesAsync();
 		return new OkResult();
 	}
 #endif
 
-	private Task BackupTablesAsync(string[] tables)
-		=> Task.WhenAll(tables.Select(BackupTableAsync));
+	private Task BackupTablesAsync()
+		=> Task.WhenAll(tablesToBackup.Select(BackupTableAsync));
 
 	private async Task BackupTableAsync(string tableName)
 	{
@@ -81,6 +83,11 @@ public class BackupTables(ILogger<BackupTables> log)
 
 		return entityCount;
 	}
+
+	private static string[] ExtractTableNames(string? commaSeparatedTableNames) =>
+		commaSeparatedTableNames?
+			.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.ToArray() ?? [];
 
 	private static ResiliencePipeline GetResiliencePipeline(ILogger logger)
 		=> new ResiliencePipelineBuilder()
