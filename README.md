@@ -2,6 +2,24 @@
 
 Automated Azure Table Storage Backup: run periodic backups of Azure Storage Tables to another Storage Account.
 
+## Deploy in Azure
+
+To deploy the function app to Azure, follow these steps:
+
+1. Fork the repository to your GitHub account.
+2. Create a Azure Function App in the Azure Portal (Use .NET 8 isolated runtime).
+3. Create a pipeline in Azure DevOps using the provided `azure-pipelines.yml` file.
+4. Add the necessary variables and environments required by the `azure-pipelines.yml` file to your Azure DevOps pipeline configuration:
+
+Variables:
+
+- `functionAppName`: The name of the Azure Function App you created in the Azure Portal.
+- `azureSubscription`: The Azure subscription ID where the Function App will be deployed.
+
+Environment:
+
+- `Azure`: This environment should be configured in Azure DevOps to include the necessary service connections and permissions to deploy resources to your Azure subscription.
+
 ## Run locally
 
 ### Tooling Required
@@ -14,7 +32,7 @@ To run this project locally, you will need the following:
 
 ### Running a Test Database
 
-Azurite runs a local Azure Storage emulator. By creating 2 accounts in Azurite (*devstoreaccount1* and *devstoreaccount2*), it can be used for both the backup source and the backup destination.
+Azurite runs a local Azure Storage emulator. By [creating 2 accounts in Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=npm%2Cblob-storage#custom-storage-accounts-and-keys) (*devstoreaccount1* and *devstoreaccount2*), it can be used for both the backup source and the backup destination.
 
 Navigate to the `db/` directory and run the following command based on your operating system:
 
@@ -44,6 +62,7 @@ Copy the `local.settings.json.sample` file to `local.settings.json` in the `src/
 | BACKUP_SOURCE_TABLES | comma separated list of tables to backup from source account |
 | BACKUP_DAILY_SCHEDULE | [Cron expression](https://github.com/atifaziz/NCrontab) to define the periodicity of the backup |
 
+The project will backup the data of `BACKUP_SOURCE_TABLES`, from the Azure Storage account described by `BACKUP_SOURCE_CONNECTION_STRING` to the Azure Storage account described by `BACKUP_DESTINATION_CONNECTION_STRING`.
 
 ### Building and Running the Azure Function
 
@@ -64,6 +83,12 @@ curl -X POST http://localhost:7071/api/BackupTables
 ```
 
 This will trigger the *BackupTablesTest* function and you should see the logs in the console indicating the function execution.
+
+## Restoration Process
+
+Restoration can be achieved by simply swapping the source and backup storage accounts in the client applications. This is the advantage of having a storage account as a backup medium.
+
+By configuring the client applications to use the backup storage account as the source, you can easily restore the data to its original state or to a new storage account.
 
 ## Licensing
 
