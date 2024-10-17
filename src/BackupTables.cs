@@ -17,11 +17,27 @@ public class BackupTables(ILogger<BackupTables> log)
 	private enum BackupFrequency { Daily, Weekly, Monthly };
 
 	[Function("BackupTablesDaily")]
-	public async Task RunAsync(
+	public async Task RunDailyAsync(
 		[TimerTrigger("%BACKUP_DAILY_SCHEDULE%")]
 		TimerInfo timerInfo)
 	{
 		await BackupTablesAsync(BackupFrequency.Daily);
+	}
+
+	[Function("BackupTablesWeekly")]
+	public async Task RunWeeklyAsync(
+		[TimerTrigger("%BACKUP_WEEKLY_SCHEDULE%")]
+		TimerInfo timerInfo)
+	{
+		await BackupTablesAsync(BackupFrequency.Weekly);
+	}
+
+	[Function("BackupTablesMonthly")]
+	public async Task RunMonthlyAsync(
+		[TimerTrigger("%BACKUP_MONTHLY_SCHEDULE%")]
+		TimerInfo timerInfo)
+	{
+		await BackupTablesAsync(BackupFrequency.Monthly);
 	}
 
 #if DEBUG

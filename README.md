@@ -20,6 +20,8 @@ Environment:
 
 - `Azure`: This environment should be configured in Azure DevOps to include the necessary service connections and permissions to deploy resources to your Azure subscription.
 
+5. Add [required configurations / environment variables](#configuration) in Azure Function App
+
 ## Run locally
 
 ### Tooling Required
@@ -55,12 +57,14 @@ This will start the Azurite emulator with the necessary configuration for local 
 
 Copy the `local.settings.json.sample` file to `local.settings.json` in the `src/` directory and update the configuration as needed:
 
-| Setting | Value |
+| <a name="configuration" id="configuration"></a> Setting | Value |
 |---|---|
 | BACKUP_SOURCE_CONNECTION_STRING | connection string to the backup source account |
 | BACKUP_DESTINATION_CONNECTION_STRING | connection string to the backup destination account |
 | BACKUP_SOURCE_TABLES | comma separated list of tables to backup from source account |
 | BACKUP_DAILY_SCHEDULE | [Cron expression](https://github.com/atifaziz/NCrontab) to define the periodicity of the backup |
+| BACKUP_WEEKLY_SCHEDULE | [Cron expression](https://github.com/atifaziz/NCrontab) to define the periodicity of the weekly backup |
+| BACKUP_MONTHLY_SCHEDULE | [Cron expression](https://github.com/atifaziz/NCrontab) to define the periodicity of the monthly backup |
 
 The project will backup the data of `BACKUP_SOURCE_TABLES`, from the Azure Storage account described by `BACKUP_SOURCE_CONNECTION_STRING` to the Azure Storage account described by `BACKUP_DESTINATION_CONNECTION_STRING`.
 
