@@ -14,12 +14,14 @@ public class BackupTables(ILogger<BackupTables> log)
 
 	private static readonly string[] tablesToBackup = ExtractTableNames(Environment.GetEnvironmentVariable("BACKUP_SOURCE_TABLES"));
 
+	private enum BackupFrequency { Daily, Weekly, Monthly };
+
 	[Function("BackupTablesDaily")]
 	public async Task RunAsync(
 		[TimerTrigger("%BACKUP_DAILY_SCHEDULE%")]
 		TimerInfo timerInfo)
 	{
-		await BackupTablesAsync();
+		await BackupTablesAsync(BackupFrequency.Daily);
 	}
 
 #if DEBUG
@@ -28,36 +30,43 @@ public class BackupTables(ILogger<BackupTables> log)
 		[HttpTrigger(AuthorizationLevel.Anonymous, "get")]
 		HttpRequest req)
 	{
-		await BackupTablesAsync();
+		await BackupTablesAsync(BackupFrequency.Daily);
 		return new OkResult();
 	}
 #endif
 
-	private Task BackupTablesAsync()
-		=> Task.WhenAll(tablesToBackup.Select(BackupTableAsync));
+	private Task BackupTablesAsync(BackupFrequency frequency)
+		=> Task.WhenAll(tablesToBackup.Select(tableName => BackupTableAsync(tableName, frequency)));
 
-	private async Task BackupTableAsync(string tableName)
+	private async Task BackupTableAsync(string tableName, BackupFrequency frequency)
 	{
 		try
 		{
-			log.LogInformation("Backup of table {TableName}", tableName);
+			log.LogInformation("Backup of table {TableName} with frequency {Frequency} started", tableName, frequency);
 
 			var resiliencePipeline = GetResiliencePipeline(log);
 
-			await resiliencePipeline.ExecuteAsync(
-				async (CancellationToken ct) => await destinationTableServiceClient.DeleteTableIfExistsAsync(tableName, ct));
+			string backupTableName = GenerateBackupTableName(tableName, frequency);
 
 			await resiliencePipeline.ExecuteAsync(
-				async (CancellationToken ct) => await destinationTableServiceClient.CreateTableAsync(tableName, ct));
+				async (CancellationToken ct) => await destinationTableServiceClient.DeleteTableIfExistsAsync(backupTableName, ct));
+
+			await resiliencePipeline.ExecuteAsync(
+				async (CancellationToken ct) => await destinationTableServiceClient.CreateTableAsync(backupTableName, ct));
 
 			var entityCount = await BackupEntities(tableName);
 
-			log.LogInformation("Backup of table {TableName} completed with {EntityCount} entries", tableName, entityCount);
+			log.LogInformation("Backup of table {TableName} with frequency {Frequency} completed with {EntityCount} entries", tableName, frequency, entityCount);
 		}
 		catch (Exception ex)
 		{
-			log.LogError(ex, "Backup of table {TableName} failed", tableName);
+			log.LogError(ex, "Backup of table {TableName} with frequency {Frequency} failed", tableName, frequency);
 		}
+	}
+
+	private static string GenerateBackupTableName(string tableName, BackupFrequency frequency)
+	{
+		return frequency == BackupFrequency.Daily ? tableName : $"{tableName}_{frequency.ToString().ToLowerInvariant()}";
 	}
 
 	private static async Task<int> BackupEntities(string tableName)
