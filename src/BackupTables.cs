@@ -82,7 +82,7 @@ public class BackupTables(ILogger<BackupTables> log)
 
 	private static string GenerateBackupTableName(string tableName, BackupFrequency frequency)
 	{
-		return frequency == BackupFrequency.Daily ? tableName : $"{tableName}_{frequency.ToString().ToLowerInvariant()}";
+		return frequency == BackupFrequency.Daily ? tableName : $"{frequency.ToString().ToLowerInvariant()}{tableName}";
 	}
 
 	private static async Task<int> BackupEntities(string tableName)

@@ -90,9 +90,11 @@ This will trigger the *BackupTablesTest* function and you should see the logs in
 
 ## Restoration Process
 
-Restoration can be achieved by simply swapping the source and backup storage accounts in the client applications. This is the advantage of having a storage account as a backup medium.
+Restoration of the latest backup can be achieved by simply swapping the source and backup storage accounts in the client applications. This is the advantage of having a storage account as a backup medium.
 
 By configuring the client applications to use the backup storage account as the source, you can easily restore the data to its original state or to a new storage account.
+
+Restoration of weekly and monthly backups requires one more manual step: rename the tables to restore by removing the `weekly` and `monthly` prefixes.
 
 ## Licensing
 
