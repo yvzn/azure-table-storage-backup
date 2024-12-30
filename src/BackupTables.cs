@@ -70,7 +70,7 @@ public class BackupTables(ILogger<BackupTables> log)
 			await resiliencePipeline.ExecuteAsync(
 				async (CancellationToken ct) => await destinationTableServiceClient.CreateTableAsync(backupTableName, ct));
 
-			var entityCount = await BackupEntities(tableName);
+			var entityCount = await BackupEntities(tableName, backupTableName);
 
 			log.LogInformation("Backup of table {TableName} with frequency {Frequency} completed with {EntityCount} entries", tableName, frequency, entityCount);
 		}
@@ -85,11 +85,11 @@ public class BackupTables(ILogger<BackupTables> log)
 		return frequency == BackupFrequency.Daily ? tableName : $"{frequency.ToString().ToLowerInvariant()}{tableName}";
 	}
 
-	private static async Task<int> BackupEntities(string tableName)
+	private static async Task<int> BackupEntities(string tableName, string backupTableName)
 	{
 		var entityCount = 0;
 		var sourceTableClient = new TableClient(Environment.GetEnvironmentVariable("BACKUP_SOURCE_CONNECTION_STRING"), tableName);
-		var destinationTableClient = new TableClient(Environment.GetEnvironmentVariable("BACKUP_DESTINATION_CONNECTION_STRING"), tableName);
+		var destinationTableClient = new TableClient(Environment.GetEnvironmentVariable("BACKUP_DESTINATION_CONNECTION_STRING"), backupTableName);
 
 		await foreach (var sourceEntity in sourceTableClient.QueryAsync<TableEntity>(_ => true))
 		{
