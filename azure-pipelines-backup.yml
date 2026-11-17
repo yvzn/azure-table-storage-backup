@@ -1,0 +1,70 @@
+trigger: none
+pr: none
+
+variables:
+- group: "backup"
+- name: scheduleDayOfMonth
+  value: $[format('{0:dd}', pipeline.startTime)]
+
+schedules:
+- cron: "0 1 * * *"
+  displayName: Daily backup
+  branches:
+    include:
+    - main
+  always: true
+- cron: "0 11 * * 3"
+  displayName: Weekly backup
+  branches:
+    include:
+    - main
+  always: true
+- cron: "0 3 * * 0"
+  displayName: Monthly backup
+  branches:
+    include:
+    - main
+  always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+- job: Backup
+  condition: eq(variables['Build.Reason'], 'Schedule')
+  steps:
+  - bash: |
+      set -euo pipefail
+
+      case "$SCHEDULE_NAME" in
+        "Daily backup") endpoint=BackupTablesDailyHttp ;;
+        "Weekly backup") endpoint=BackupTablesWeeklyHttp ;;
+        "Monthly backup")
+          if (( 10#$SCHEDULE_DAY > 7 )); then
+            echo "Not the first Sunday of the month; skipping monthly backup."
+            exit 0
+          fi
+          endpoint=BackupTablesMonthlyHttp
+          ;;
+        *) echo "Unknown backup schedule: $SCHEDULE_NAME" >&2; exit 1 ;;
+      esac
+
+      if [[ -z "$FUNCTION_APP_URL" || -z "$FUNCTION_HOST_KEY" ]]; then
+        echo "functionAppUrl and functionHostKey must be configured." >&2
+        exit 1
+      fi
+
+      status=$(printf 'x-functions-key: %s\n' "$FUNCTION_HOST_KEY" |
+        curl --fail --silent --show-error --request POST --header @- \
+          --output /dev/null --write-out '%{http_code}' \
+          -- "${FUNCTION_APP_URL%/}/api/$endpoint")
+      if [[ ! "$status" =~ ^2[0-9][0-9]$ ]]; then
+        echo "Backup endpoint returned HTTP $status." >&2
+        exit 1
+      fi
+    displayName: Invoke scheduled backup
+    env:
+      SCHEDULE_NAME: $(Build.CronSchedule.DisplayName)
+      SCHEDULE_DAY: $(scheduleDayOfMonth)
+      FUNCTION_APP_URL: $(functionAppUrl)
+      FUNCTION_HOST_KEY: $(functionHostKey)

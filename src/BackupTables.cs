@@ -40,6 +40,30 @@ public class BackupTables(ILogger<BackupTables> log)
 		await BackupTablesAsync(BackupFrequency.Monthly);
 	}
 
+	[Function("BackupTablesDailyHttp")]
+	public async Task<IActionResult> RunDailyHttpAsync(
+		[HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+	{
+		await BackupTablesAsync(BackupFrequency.Daily);
+		return new OkResult();
+	}
+
+	[Function("BackupTablesWeeklyHttp")]
+	public async Task<IActionResult> RunWeeklyHttpAsync(
+		[HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+	{
+		await BackupTablesAsync(BackupFrequency.Weekly);
+		return new OkResult();
+	}
+
+	[Function("BackupTablesMonthlyHttp")]
+	public async Task<IActionResult> RunMonthlyHttpAsync(
+		[HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+	{
+		await BackupTablesAsync(BackupFrequency.Monthly);
+		return new OkResult();
+	}
+
 #if DEBUG
 	[Function("BackupTablesTest")]
 	public async Task<IActionResult> TestAsync(
