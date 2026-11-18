@@ -21,6 +21,22 @@ Environment:
 - `Azure`: This environment should be configured in Azure DevOps to include the necessary service connections and permissions to deploy resources to your Azure subscription.
 
 5. Add [required configurations / environment variables](#configuration) in Azure Function App
+6. To schedule backups through Azure DevOps, create a separate pipeline from `azure-pipelines-backup.yml` and authorize it to use the `backup` variable group. Add `functionAppUrl` (the Function App base URL, for example `https://example.azurewebsites.net`) and `functionHostKey` (a secret host key) to that group. Do not configure schedules in the pipeline UI, because UI schedules override YAML schedules.
+
+The backup pipeline invokes the daily endpoint at 01:00 UTC every day, the weekly endpoint at 11:00 UTC every Wednesday, and the monthly endpoint at 03:00 UTC on the first Sunday of each month. The monthly pipeline runs every Sunday but skips the invocation after the seventh day. Scheduled runs must be enabled for the `main` branch.
+
+The existing timers remain active independently of this pipeline. To avoid duplicate backups, disable them using the Function App settings `AzureWebJobs.BackupTablesDaily.Disabled`, `AzureWebJobs.BackupTablesWeekly.Disabled`, and `AzureWebJobs.BackupTablesMonthly.Disabled`, each set to `true`. If the timers are retained, avoid overlapping timer and HTTP executions for the same frequency: both write to the same backup tables.
+
+The endpoints wait for the backup routine to finish, but individual table failures are logged and do not change the HTTP success response, matching the timer functions' existing behavior. Azure's HTTP request timeout can also be reached for long backups while the function continues running; monitor function logs for the final outcome.
+
+### HTTP backup endpoints
+
+Send a POST request to `/api/BackupTablesDailyHttp`, `/api/BackupTablesWeeklyHttp`, or `/api/BackupTablesMonthlyHttp`. Each endpoint requires a function key or host key in the `x-functions-key` header and uses the same backup routine as its corresponding timer. For example:
+
+```sh
+curl -X POST -H "x-functions-key: $FUNCTION_HOST_KEY" \
+  "$FUNCTION_APP_URL/api/BackupTablesDailyHttp"
+```
 
 ## Run locally
 
